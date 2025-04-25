@@ -48,17 +48,18 @@ sequences = tokenizer.texts_to_sequences(df['review'].values)
 padded_sequences = pad_sequences(sequences, maxlen=MAXLEN, padding='post')
 labels = df['label'].astype('float32').values
 
-# Build the model
+# Build the ANN model
 EMBED_DIM = 32
 model = tf.keras.Sequential([
     tf.keras.layers.Embedding(VOCAB_SIZE, EMBED_DIM, input_length=MAXLEN),
-    tf.keras.layers.LSTM(64, return_sequences=True),
-    tf.keras.layers.LSTM(32),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dropout(0.5),
     tf.keras.layers.Dense(64, activation='relu'),
     tf.keras.layers.Dense(1, activation='sigmoid')
 ])
 
-MODEL_PATH = 'sentiment_model.h5'
+MODEL_PATH = 'sentiment_model_ann.h5'
 if not os.path.exists(MODEL_PATH):
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     model.fit(padded_sequences, labels, epochs=10, batch_size=32, validation_split=0.2)
@@ -94,16 +95,10 @@ if st.button("Predict Sentiment"):
         st.subheader("Keyword-based Sentiment:")
         st.write(f"**{keyword_label}**")
 
-        st.subheader("LSTM Model Sentiment:")
+        st.subheader("Model Sentiment:")
         st.write(f"**{model_label}** (Confidence: `{model_pred:.2f}`)")
         st.progress(int(model_pred * 100))
 
 if st.button("Give me a sample review"):
     st.info("Example: _This movie was absolutely amazing. The cast was perfect and the plot was thrilling!_")
 #streamlit run movie_review_app.py
-
-#streamlit run movie_review_app.py
-
-
-
-

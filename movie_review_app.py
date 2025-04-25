@@ -13,48 +13,42 @@ df['label'] = df['label'].map({'pos': 1, 'neg': 0})
 
 # Text preprocessing function
 def preprocess_text(text):
-    if isinstance(text, str):  # Ensure text is a string before processing
-        text = text.lower()  # Convert to lowercase
-        text = re.sub(r'[^a-zA-Z\s]', '', text)  # Remove non-alphabetic characters
+    if isinstance(text, str):
+        text = text.lower()
+        text = re.sub(r'[^a-zA-Z\s]', '', text)
     else:
-        text = ''  # If not a string, set text as empty string or handle as needed
+        text = ''
     return text
 
-# Define positive and negative keywords
+# Keyword-based sentiment detection
 positive_keywords = ['good', 'great', 'excellent', 'awesome', 'fantastic', 'love', 'amazing', 'best', 'perfect', 'wonderful', 'positive']
 negative_keywords = ['bad', 'worst', 'terrible', 'horrible', 'awful', 'disappointing', 'hate', 'boring', 'negative', 'poor', 'sad']
 
-# Keyword-based sentiment detection
 def detect_sentiment_by_keywords(text):
     text = text.lower()
     positive_count = sum(1 for word in positive_keywords if word in text)
     negative_count = sum(1 for word in negative_keywords if word in text)
     if positive_count > negative_count:
-        return 1  # Positive sentiment
+        return 1
     elif negative_count > positive_count:
-        return 0  # Negative sentiment
+        return 0
     else:
-        return 0  # Default to negative if no clear match
+        return 0
 
-# Ensure all reviews are strings
+# Clean dataset reviews
 df['review'] = df['review'].fillna('').astype(str)
-
-# Apply preprocessing
 df['review'] = df['review'].apply(preprocess_text)
 
-# Prepare data
-texts = df['review'].astype(str).values
-labels = df['label'].astype('float32').values
-
-# Tokenizer setup
+# Prepare tokenizer
 VOCAB_SIZE = 10000
 MAXLEN = 100
 tokenizer = Tokenizer(num_words=VOCAB_SIZE, oov_token="<OOV>")
-tokenizer.fit_on_texts(texts)
-sequences = tokenizer.texts_to_sequences(texts)
+tokenizer.fit_on_texts(df['review'].values)
+sequences = tokenizer.texts_to_sequences(df['review'].values)
 padded_sequences = pad_sequences(sequences, maxlen=MAXLEN, padding='post')
+labels = df['label'].astype('float32').values
 
-# Model setup with LSTM
+# Build the model
 EMBED_DIM = 32
 model = tf.keras.Sequential([
     tf.keras.layers.Embedding(VOCAB_SIZE, EMBED_DIM, input_length=MAXLEN),
@@ -64,36 +58,49 @@ model = tf.keras.Sequential([
     tf.keras.layers.Dense(1, activation='sigmoid')
 ])
 
-model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-
-# Train and save the model if not already saved
 MODEL_PATH = 'sentiment_model.h5'
 if not os.path.exists(MODEL_PATH):
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     model.fit(padded_sequences, labels, epochs=10, batch_size=32, validation_split=0.2)
     model.save(MODEL_PATH)
 else:
-    model = tf.keras.models.load_model(MODEL_PATH)
+    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-# Streamlit app
+# Streamlit UI
+st.set_page_config(page_title="Movie Review Sentiment", layout="centered", page_icon="🎬")
 st.title("🎬 Movie Review Sentiment Analyzer")
-user_input = st.text_area("Enter a movie review:", height=150)
+st.write("Enter a movie review and see if it's positive or negative!")
+
+user_input = st.text_area("Your Review:", height=150)
 
 if st.button("Predict Sentiment"):
     if user_input.strip() == "":
         st.warning("Please enter a review first.")
     else:
-        # Preprocess user input
         user_input_cleaned = preprocess_text(user_input)
         
-        # Check sentiment based on keywords
-        sentiment_by_keywords = detect_sentiment_by_keywords(user_input_cleaned)
-        
-        # Prediction result
-        sentiment = "Positive 😊" if sentiment_by_keywords == 1 else "Negative 😞"
-        
-        # Display result
-        st.subheader("Prediction: ")
-        st.write(f"**{sentiment}** (Confidence: {sentiment_by_keywords})")
+        # Keyword prediction
+        keyword_sentiment = detect_sentiment_by_keywords(user_input_cleaned)
+        keyword_label = "Positive 😊" if keyword_sentiment == 1 else "Negative 😞"
+
+        # Model prediction
+        sequence = tokenizer.texts_to_sequences([user_input_cleaned])
+        padded = pad_sequences(sequence, maxlen=MAXLEN, padding='post')
+        model_pred = model.predict(padded)[0][0]
+        model_label = "Positive 😊" if model_pred > 0.5 else "Negative 😞"
+
+        # Output
+        st.subheader("Keyword-based Sentiment:")
+        st.write(f"**{keyword_label}**")
+
+        st.subheader("LSTM Model Sentiment:")
+        st.write(f"**{model_label}** (Confidence: `{model_pred:.2f}`)")
+        st.progress(int(model_pred * 100))
+
+if st.button("Give me a sample review"):
+    st.info("Example: _This movie was absolutely amazing. The cast was perfect and the plot was thrilling!_")
+#streamlit run movie_review_app.py
 
 #streamlit run movie_review_app.py
 

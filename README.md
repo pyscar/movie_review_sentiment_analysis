@@ -54,7 +54,7 @@ pip install -r requirements.txt
 1. Run the Streamlit app:
 
 ```bash
-streamlit run movie_review_app.py
+https://moviereviewsentimentanalysis-dmsl7ddj5hxfcodathcisy.streamlit.app/
 ```
 
 2. Open the link provided by Streamlit in your browser.

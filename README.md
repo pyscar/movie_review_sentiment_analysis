@@ -35,7 +35,7 @@ The project uses a CSV file (`moviereviews.csv`) containing movie reviews and th
 1. Clone the repository:
 
 ```bash
-git clone <your-repo-link>
+git clone https://github.com/pyscar/movie_review_sentiment_analysis.git
 cd <your-repo-folder>
 ```
 

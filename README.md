@@ -107,7 +107,3 @@ streamlit run movie_review_app.py
 This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
 
 ---
-
-If you want, I can **also write a super short, “one-page style” README** that’s ultra clean for GitHub — perfect if you want it to look professional without scrolling a lot.
-
-Do you want me to do that version too?

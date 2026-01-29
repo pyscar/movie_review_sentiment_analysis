@@ -65,7 +65,8 @@ https://moviereviewsentimentanalysis-dmsl7ddj5hxfcodathcisy.streamlit.app/
    * **Model-based sentiment** will be displayed with a confidence score.
 
 4. Click **Give me a sample review** to see an example review.
-![Uploading image.png…]()
+    <img width="1840" height="878" alt="image" src="https://github.com/user-attachments/assets/0595c555-8849-48a1-87a7-2525f32bb004" />
+
 
 ---
 
